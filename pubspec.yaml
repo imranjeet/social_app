@@ -36,6 +36,11 @@ dependencies:
   cupertino_icons: ^0.1.2
   curved_navigation_bar: ^0.3.3
   path_provider: ^1.6.11
+  flutter_svg:
+  firebase_storage: ^3.1.6
+  firebase_messaging: ^6.0.16
+  uuid: ^2.1.0
+  geolocator: ^5.3.2+2
 
 
 # For information on the generic Dart part of this file, see the

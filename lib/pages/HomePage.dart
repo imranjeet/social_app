@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -13,6 +14,8 @@ import 'package:social_app/pages/UploadPage.dart';
 
 final GoogleSignIn gSignIn = GoogleSignIn();
 final usersReference = Firestore.instance.collection("users");
+final StorageReference storageReference = FirebaseStorage.instance.ref().child("Posts Pictures");
+final postsReference = Firestore.instance.collection("posts");
 
 final DateTime timestamp = DateTime.now();
 
@@ -115,9 +118,9 @@ class _HomePageState extends State<HomePage> {
         children: <Widget>[
           TimeLinePage(),
           SearchPage(),
-          UploadPage(),
+          UploadPage(gCurrentUser: currentUser),
           NotificationsPage(),
-          ProfilePage(),
+          ProfilePage(userProfileId: currentUser.id),
         ],
         controller: pageController,
         onPageChanged: whenPageChanges,
@@ -131,7 +134,7 @@ class _HomePageState extends State<HomePage> {
         items: <Widget>[
           Icon(Icons.home, size: 30),
           Icon(Icons.search, size: 30),
-          Icon(Icons.add, size: 45),
+          Icon(Icons.add, size: 40),
           Icon(Icons.notifications, size: 30),
           Icon(Icons.account_circle, size: 30),
         ],

@@ -5,7 +5,7 @@ AppBar header(context, {bool isAppTitle = false, String strTitle, disappearedBac
     iconTheme: IconThemeData(
       color: Colors.white,
     ),
-    automaticallyImplyLeading: disappearedBackButton ? false : true,
+    automaticallyImplyLeading: false,
     title: Text(
       isAppTitle ? "Social App" : strTitle, style: TextStyle(
         color: Colors.black,
