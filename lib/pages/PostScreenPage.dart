@@ -1,8 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:social_app/pages/HomePage.dart';
+import 'package:social_app/widgets/HeaderWidget.dart';
+import 'package:social_app/widgets/PostWidget.dart';
+import 'package:social_app/widgets/ProgressWidget.dart';
 
 class PostScreenPage extends StatelessWidget {
+  final String postId;
+  final String userId;
+
+  PostScreenPage({this.postId, this.userId});
+
   @override
   Widget build(BuildContext context) {
-    return Text("Post Screen goes here.");
+    return FutureBuilder(
+        future: postsReference
+            .document(userId)
+            .collection("usersPosts")
+            .document(postId)
+            .get(),
+        builder: (context, dataSnapshot) {
+          if (!dataSnapshot.hasData) {
+            return circularProgress();
+          }
+
+          Post post = Post.fromDocument(dataSnapshot.data);
+
+          return Center(
+            child: Scaffold(
+              appBar: header(context, strTitle: post.discription),
+              body: ListView(
+                children: <Widget>[
+                  Container(
+                    child: post,
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
   }
 }

@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 AppBar header(context, {bool isAppTitle = false, String strTitle, disappearedBackButton=false}) {
   return AppBar(
     iconTheme: IconThemeData(
-      color: Colors.white,
+      color: Colors.black,
     ),
-    automaticallyImplyLeading: false,
+    automaticallyImplyLeading: isAppTitle ? disappearedBackButton : true,
     title: Text(
       isAppTitle ? "Social App" : strTitle, style: TextStyle(
         color: Colors.black,
