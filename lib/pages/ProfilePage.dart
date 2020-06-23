@@ -1,9 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:social_app/models/user.dart';
 import 'package:social_app/pages/EditProfilePage.dart';
 import 'package:social_app/pages/HomePage.dart';
 import 'package:social_app/widgets/HeaderWidget.dart';
+import 'package:social_app/widgets/PostTileWidget.dart';
+import 'package:social_app/widgets/PostWidget.dart';
 import 'package:social_app/widgets/ProgressWidget.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -16,6 +19,16 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final String currentOnlineUserId = currentUser?.id;
+  bool loading = false;
+  int countPost = 0;
+  List<Post> postsList = [];
+  int postOrientation = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    getAllProfilePosts();
+  }
 
   createProfileTopView() {
     return FutureBuilder(
@@ -36,22 +49,26 @@ class _ProfilePageState extends State<ProfilePage> {
                       backgroundColor: Colors.cyan,
                       backgroundImage: CachedNetworkImageProvider(user.url),
                     ),
-                    SizedBox(height:5.0),
+                    SizedBox(height: 5.0),
                     Container(
                       alignment: Alignment.center,
                       child: Text(user.username),
                     ),
-                    SizedBox(height:5.0),
+                    SizedBox(height: 5.0),
                     Container(
                       alignment: Alignment.center,
-                      child: Text(user.profileName, style: TextStyle(fontSize: 20.0, fontWeight: FontWeight.bold),),
+                      child: Text(
+                        user.profileName,
+                        style: TextStyle(
+                            fontSize: 20.0, fontWeight: FontWeight.bold),
+                      ),
                     ),
-                    SizedBox(height:5.0),
+                    SizedBox(height: 5.0),
                     Container(
                       alignment: Alignment.center,
                       child: Text(user.bio),
                     ),
-                    SizedBox(height:5.0),
+                    SizedBox(height: 5.0),
                     Row(
                       mainAxisSize: MainAxisSize.max,
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -61,7 +78,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         createColumn("following", 0),
                       ],
                     ),
-                    SizedBox(height:10.0),
+                    SizedBox(height: 10.0),
                     Column(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: <Widget>[
@@ -70,7 +87,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ],
                 ),
-                
               ],
             ),
           );
@@ -145,12 +161,105 @@ class _ProfilePageState extends State<ProfilePage> {
         appBar: AppBar(
           automaticallyImplyLeading: false,
           title: header(context, strTitle: "Profile"),
-          
         ),
         body: ListView(
           children: <Widget>[
             createProfileTopView(),
+            Divider(),
+            createListGridPost(),
+            Divider(
+              height: 0.0,
+            ),
+            displayProfilePost(),
           ],
         ));
+  }
+
+  displayProfilePost() {
+    if (loading) {
+      return circularProgress();
+    } else if (postsList.isEmpty) {
+      return Container(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(30.0),
+              child: Icon(
+                Icons.photo_library,
+                size: 200.0,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 20.0),
+              child: Text(
+                "No Posts",
+                style: TextStyle(
+                  fontSize: 40.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (postOrientation == 0) {
+      List<GridTile> gridTilesList = [];
+      postsList.forEach((eachPost) {
+        gridTilesList.add(GridTile(
+          child: PostTile(eachPost),
+        ));
+      });
+      return GridView.count(
+        crossAxisCount: 3,
+        childAspectRatio: 1.0,
+        mainAxisSpacing: 1.5,
+        crossAxisSpacing: 1.5,
+        shrinkWrap: true,
+        physics: NeverScrollableScrollPhysics(),
+        children: gridTilesList,
+      );
+    } else if (postOrientation == 1) {
+      return Column(
+        children: postsList,
+      );
+    }
+  }
+
+  getAllProfilePosts() async {
+    setState(() {
+      loading = true;
+    });
+
+    QuerySnapshot querySnapshot = await postsReference
+        .document(widget.userProfileId)
+        .collection("usersPosts")
+        .orderBy("timestamp", descending: true)
+        .getDocuments();
+    setState(() {
+      loading = false;
+      countPost = querySnapshot.documents.length;
+      postsList = querySnapshot.documents
+          .map((documentSnapshot) => Post.fromDocument(documentSnapshot))
+          .toList();
+    });
+  }
+
+  createListGridPost() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: <Widget>[
+        IconButton(
+            icon: Icon(Icons.grid_on), onPressed: () => setOrientation(0)),
+        IconButton(
+            icon: Icon(Icons.list), onPressed: () => setOrientation(1)),
+      ],
+    );
+  }
+
+  setOrientation(int orientation) {
+    setState(() {
+      this.postOrientation = orientation;
+    });
   }
 }
