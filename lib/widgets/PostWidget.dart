@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:social_app/models/user.dart';
 import 'package:social_app/pages/CommentsPage.dart';
 import 'package:social_app/pages/HomePage.dart';
-import 'package:social_app/widgets/CImageWidget.dart';
+import 'package:social_app/pages/ProfilePage.dart';
 import 'package:social_app/widgets/ProgressWidget.dart';
 
 class Post extends StatefulWidget {
@@ -25,7 +25,7 @@ class Post extends StatefulWidget {
       this.username,
       this.discription,
       this.location,
-      this.url});
+      this.url, });
 
   factory Post.fromDocument(DocumentSnapshot documentSnapshot) {
     return Post(
@@ -53,6 +53,7 @@ class Post extends StatefulWidget {
     return counter;
   }
 
+  
   @override
   _PostState createState() => _PostState(
         postId: this.postId,
@@ -75,6 +76,7 @@ class _PostState extends State<Post> {
   final String location;
   final String url;
   int likeCount;
+  int commentCount;
   bool isLiked;
   bool showHeart = false;
   final String currentOnlineUserId = currentUser?.id;
@@ -92,16 +94,20 @@ class _PostState extends State<Post> {
 
   @override
   Widget build(BuildContext context) {
-
     isLiked = (likes[currentOnlineUserId] == true);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Column(
-        children: <Widget>[
-          createPostHead(),
-          createPostPicture(),
-          createPostFooter(),
-        ],
+      padding: const EdgeInsets.only(bottom: 5, right: 10, left: 10),
+      child: Card(
+        // borderOnForeground: ,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        // elevation: 1.0,
+        child: Column(
+          children: <Widget>[
+            createPostHead(),
+            createPostPicture(),
+            createPostFooter(),
+          ],
+        ),
       ),
     );
   }
@@ -116,11 +122,14 @@ class _PostState extends State<Post> {
         User user = User.fromDocument(dataSnapshot.data);
         bool isPostOwner = currentOnlineUserId == ownerId;
         return ListTile(
-          leading: CircleAvatar(
-            backgroundImage: CachedNetworkImageProvider(user.url),
+          leading: GestureDetector(
+            onTap: () => displayUserProfile(context, userProfileId: user.id),
+            child: CircleAvatar(
+              backgroundImage: CachedNetworkImageProvider(user.url),
+            ),
           ),
           title: GestureDetector(
-            onTap: (){},
+            onTap: () => displayUserProfile(context, userProfileId: user.id),
             child: Text(
               user.username,
               style: TextStyle(
@@ -132,52 +141,146 @@ class _PostState extends State<Post> {
           subtitle: Text(
             location,
           ),
-          trailing: isPostOwner ? IconButton(icon: Icon(Icons.more_vert), onPressed: () => print("Delete"),) : Text(""),
+          trailing: isPostOwner
+              ? IconButton(
+                  icon: Icon(Icons.more_vert),
+                  onPressed: () => controlPostDelete(context),
+                )
+              : Text(""),
         );
       },
     );
   }
 
-  removeLike(){
+  controlPostDelete(BuildContext mContext) {
+    return showDialog(
+        context: mContext,
+        builder: (context) {
+          return SimpleDialog(
+            title: Text("What do you want?"),
+            children: <Widget>[
+              SimpleDialogOption(
+                child: Text(
+                  "Delete",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                  removeUserPost();
+                },
+              ),
+              SimpleDialogOption(
+                child: Text(
+                  "Cancel",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ],
+          );
+        });
+  }
+
+  removeUserPost() async {
+    postsReference
+        .document(ownerId)
+        .collection('usersPosts')
+        .document(postId)
+        .get()
+        .then((document) {
+      if (document.exists) {
+        document.reference.delete();
+      }
+    });
+
+    storageReference.child("post_$postId.jpg").delete();
+
+    QuerySnapshot querySnapshot = await activityFeedReference
+        .document(ownerId)
+        .collection("feedItems")
+        .where("postId", isEqualTo: postId)
+        .getDocuments();
+
+    querySnapshot.documents.forEach((document) {
+      if (document.exists) {
+        document.reference.delete();
+      }
+    });
+
+    QuerySnapshot commentQuerySnapshot = await commentsReference
+        .document(postId)
+        .collection("comments")
+        .getDocuments();
+
+    commentQuerySnapshot.documents.forEach((document) {
+      if (document.exists) {
+        document.reference.delete();
+      }
+    });
+  }
+
+  displayUserProfile(BuildContext context, {String userProfileId}) {
+    Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => ProfilePage(userProfileId: userProfileId)));
+  }
+
+  removeLike() {
     bool isNotPostOwner = currentOnlineUserId != ownerId;
-    if(isNotPostOwner){
-      activityFeedReference.document(ownerId).collection("feedItems").document(postId).get().then((document){
-        if(document.exists){
+    if (isNotPostOwner) {
+      activityFeedReference
+          .document(ownerId)
+          .collection("feedItems")
+          .document(postId)
+          .get()
+          .then((document) {
+        if (document.exists) {
           document.reference.delete();
         }
       });
-
     }
   }
 
-  addLike(){
+  addLike() {
     bool isNotPostOwner = currentOnlineUserId != ownerId;
-    if(isNotPostOwner){
-      activityFeedReference.document(ownerId).collection("feedItems").document(postId).setData({
+    if (isNotPostOwner) {
+      activityFeedReference
+          .document(ownerId)
+          .collection("feedItems")
+          .document(postId)
+          .setData({
         "type": "like",
         "username": currentUser.username,
         "userId": currentUser.id,
-        "timestamp": timestamp,
+        "timestamp": DateTime.now(),
         "url": url,
         "postId": postId,
-        "userProfileImage": currentUser.url,
+        "userProfileImg": currentUser.url,
       });
     }
   }
 
-  controlUserLikePost(){
+  controlUserLikePost() {
     bool _liked = likes[currentOnlineUserId] == true;
-    if(_liked){
-      postsReference.document(ownerId).collection("usersPosts").document(postId).updateData({"likes.$currentOnlineUserId": false});
+    if (_liked) {
+      postsReference
+          .document(ownerId)
+          .collection("usersPosts")
+          .document(postId)
+          .updateData({"likes.$currentOnlineUserId": false});
       removeLike();
       setState(() {
         likeCount = likeCount - 1;
         isLiked = false;
         likes[currentOnlineUserId] = false;
       });
-    }
-    else if(!_liked){
-      postsReference.document(ownerId).collection("usersPosts").document(postId).updateData({"likes.$currentOnlineUserId": true});
+    } else if (!_liked) {
+      postsReference
+          .document(ownerId)
+          .collection("usersPosts")
+          .document(postId)
+          .updateData({"likes.$currentOnlineUserId": true});
       addLike();
       setState(() {
         likeCount = likeCount + 1;
@@ -185,7 +288,7 @@ class _PostState extends State<Post> {
         likes[currentOnlineUserId] = true;
         showHeart = true;
       });
-      Timer(Duration(milliseconds: 800), (){
+      Timer(Duration(milliseconds: 800), () {
         setState(() {
           showHeart = false;
         });
@@ -193,72 +296,104 @@ class _PostState extends State<Post> {
     }
   }
 
-  createPostPicture(){
+  createPostPicture() {
     return GestureDetector(
-      onDoubleTap: ()=> controlUserLikePost,
+      onDoubleTap: () => controlUserLikePost,
       child: Stack(
-        alignment: Alignment.center,
         children: <Widget>[
-          Image.network(url),
-          showHeart ? Icon(Icons.favorite, size: 140.0, color: Colors.pink,) : Text(""),
+          Image.network(
+            url,
+            height: MediaQuery.of(context).size.height * 0.4,
+            width: MediaQuery.of(context).size.width * 0.9,
+            fit: BoxFit.cover,
+          ),
+          // showHeart
+          //     ? Icon(
+          //         Icons.favorite,
+          //         size: 100,
+          //         color: Colors.pink,
+          //       )
+          //     : Text(""),
         ],
       ),
     );
   }
 
-  createPostFooter(){
+  createPostFooter() {
     return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
         Row(
-          mainAxisAlignment: MainAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            Padding(padding: EdgeInsets.only(top: 40.0, left:20.0)),
-            GestureDetector(
-              onTap: ()=> controlUserLikePost(),
-              child: Icon(
-               isLiked ? Icons.favorite : Icons.favorite_border,
-               size: 28.0,
-               color: Colors.pink,
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8, top: 8),
+              child: GestureDetector(
+                onTap: () => controlUserLikePost(),
+                child: isLiked
+                    ? Icon(
+                        Icons.thumb_up,
+                        size: 30.0,
+                        color: Colors.pink,
+                      )
+                    : Icon(Icons.thumb_up, size: 30.0, color: Colors.black54,),
               ),
             ),
-            Padding(padding: EdgeInsets.only(right: 20.0)),
-            GestureDetector(
-              onTap: ()=> displayComment(context, postId: postId, ownerId: ownerId, url: url),
-              child: Icon(
-               Icons.chat_bubble_outline,
-               size: 28.0,
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8, top: 8),
+              child: GestureDetector(
+                onTap: () => displayComment(context,
+                    postId: postId, ownerId: ownerId, url: url),
+                child: Icon(
+                  Icons.comment,
+                  size: 30.0,
+                  color: Colors.black54
+                ),
               ),
             ),
           ],
         ),
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
             Container(
-              margin: EdgeInsets.only(left:20.0),
               child: Text(
                 "$likeCount likes",
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
+            Container(
+              child: Text(
+                "",
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
           ],
         ),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Container(
-              margin: EdgeInsets.only(left: 20.0),
-              child: Text("$username ", style: TextStyle(fontWeight: FontWeight.bold),),
-            ),
-            Expanded(child: Text(discription)),
-          ],
+        Padding(
+          padding: const EdgeInsets.only(top: 8, bottom: 8,),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: <Widget>[
+              Text(
+                  "$username ",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              
+              Text(discription, overflow: TextOverflow.ellipsis,),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  displayComment(BuildContext context, {String postId, String ownerId, String url}){
-    Navigator.push(context, MaterialPageRoute(builder: (context){
-      return CommentsPage(postId: postId, postOwnerId: ownerId, postImageUrl: url);
+  displayComment(BuildContext context,
+      {String postId, String ownerId, String url}) {
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return CommentsPage(
+          postId: postId, postOwnerId: ownerId, postImageUrl: url);
     }));
   }
 }

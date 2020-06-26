@@ -41,6 +41,9 @@ dependencies:
   firebase_messaging: ^6.0.16
   uuid: ^2.1.0
   geolocator: ^5.3.2+2
+  connectivity: ^0.4.8+6
+  flutter_offline: ^0.3.0
+  data_connection_checker: ^0.3.4
 
 
 # For information on the generic Dart part of this file, see the
@@ -54,7 +57,7 @@ flutter:
       fonts:
         - asset: assets/fonts/Signatra.ttf
   assets:
-    - assets/images/google_signin_button.png
+    - assets/images/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

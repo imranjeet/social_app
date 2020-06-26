@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -14,10 +15,14 @@ import 'package:social_app/pages/UploadPage.dart';
 
 final GoogleSignIn gSignIn = GoogleSignIn();
 final usersReference = Firestore.instance.collection("users");
-final StorageReference storageReference = FirebaseStorage.instance.ref().child("Posts Pictures");
+final StorageReference storageReference =
+    FirebaseStorage.instance.ref().child("Posts Pictures");
 final postsReference = Firestore.instance.collection("posts");
 final activityFeedReference = Firestore.instance.collection("feed");
 final commentsReference = Firestore.instance.collection("comments");
+final followersReference = Firestore.instance.collection("followers");
+final followingsReference = Firestore.instance.collection("following");
+final timelineReference = Firestore.instance.collection("timeline");
 
 final DateTime timestamp = DateTime.now();
 
@@ -29,10 +34,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  
   bool isSignedIn = false;
 
   PageController pageController;
   int getPageIndex = 0;
+  FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -59,11 +67,41 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         isSignedIn = true;
       });
+      configureRealTimePushNotifications();
     } else {
       setState(() {
         isSignedIn = false;
       });
     }
+  }
+
+  configureRealTimePushNotifications() {
+    final GoogleSignInAccount gUser = gSignIn.currentUser;
+
+    _firebaseMessaging.getToken().then((token) {
+      usersReference
+          .document(gUser.id)
+          .updateData({"androidNotificationToken": token});
+    });
+
+    _firebaseMessaging.configure(
+      onMessage: (Map<String, dynamic> msg) async {
+        final String recipientId = msg["data"]["recipient"];
+        final String body = msg["notification"]["body"];
+
+        if (recipientId == gUser.id) {
+          SnackBar snackBar = SnackBar(
+            backgroundColor: Colors.yellowAccent,
+            content: Text(
+              body,
+              style: TextStyle(color: Colors.black),
+              overflow: TextOverflow.ellipsis,
+            ),
+          );
+          _scaffoldKey.currentState.showSnackBar(snackBar);
+        }
+      },
+    );
   }
 
   saveUserInfoToFireStore() async {
@@ -83,6 +121,12 @@ class _HomePageState extends State<HomePage> {
         "bio": "",
         "timestamp": timestamp,
       });
+
+      await followersReference
+          .document(gCurrentUser.id)
+          .collection('userFollowers').document(gCurrentUser.id)
+          .setData({});
+
       documentSnapshot = await usersReference.document(gCurrentUser.id).get();
     }
     currentUser = User.fromDocument(documentSnapshot);
@@ -109,16 +153,17 @@ class _HomePageState extends State<HomePage> {
   onTapChangePage(int pageIndex) {
     pageController.animateToPage(
       pageIndex,
-      duration: Duration(milliseconds: 400),
+      duration: Duration(milliseconds: 300),
       curve: Curves.bounceIn,
     );
   }
 
   Scaffold buildHomeScreen() {
     return Scaffold(
+      key: _scaffoldKey,
       body: PageView(
         children: <Widget>[
-          TimeLinePage(),
+          TimeLinePage(gCurrentUser: currentUser),
           SearchPage(),
           UploadPage(gCurrentUser: currentUser),
           NotificationsPage(),
@@ -130,15 +175,35 @@ class _HomePageState extends State<HomePage> {
       ),
       bottomNavigationBar: CurvedNavigationBar(
         index: getPageIndex,
-        color: Colors.yellow[300],
+        color: Colors.purple,
         backgroundColor: Colors.white,
         height: 60,
         items: <Widget>[
-          Icon(Icons.home, size: 30),
-          Icon(Icons.search, size: 30),
-          Icon(Icons.add, size: 40),
-          Icon(Icons.notifications, size: 30),
-          Icon(Icons.account_circle, size: 30),
+          Icon(
+            Icons.home,
+            size: 33,
+            color: Colors.white,
+          ),
+          Icon(
+            Icons.search,
+            size: 33,
+            color: Colors.white,
+          ),
+          Icon(
+            Icons.add,
+            size: 33,
+            color: Colors.white,
+          ),
+          Icon(
+            Icons.notifications,
+            size: 33,
+            color: Colors.white,
+          ),
+          Icon(
+            Icons.account_circle,
+            size: 33,
+            color: Colors.white,
+          ),
         ],
         onTap: onTapChangePage,
       ),
@@ -160,26 +225,32 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              CircleAvatar(
+                radius: 60,
+                backgroundImage: AssetImage(
+                  'assets/images/splash.png',
+                ),
+              ),
+              SizedBox(height: 10),
               Text(
                 'Social App',
                 style: TextStyle(
-                    fontSize: 92.0,
-                    color: Colors.black,
-                    fontFamily: 'Signatra'),
+                    fontSize: 60, color: Colors.black, fontFamily: 'Signatra'),
               ),
               GestureDetector(
                   onTap: () => loginUser(),
                   child: Container(
-                    height: 65.0,
-                    width: 270.0,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage(
-                            'assets/images/google_signin_button.png'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  )),
+                          height: 50.0,
+                          width: 200.0,
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image: AssetImage(
+                                  'assets/images/google_signin_button.png'),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),),
+                      
             ],
           ),
         ),

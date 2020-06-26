@@ -24,7 +24,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   bool _bioVaild = true;
 
   @override
-  void initState() { 
+  void initState() {
     super.initState();
     getAndDisplayUserInformation();
   }
@@ -34,7 +34,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
       loading = true;
     });
 
-    DocumentSnapshot documentSnapshot = await usersReference.document(widget.currentOnlineUserId).get();
+    DocumentSnapshot documentSnapshot =
+        await usersReference.document(widget.currentOnlineUserId).get();
     user = User.fromDocument(documentSnapshot);
 
     profileNameTextEditingController.text = user.profileName;
@@ -45,18 +46,24 @@ class _EditProfilePageState extends State<EditProfilePage> {
     });
   }
 
-  updateUserData(){
+  updateUserData() {
     setState(() {
-      profileNameTextEditingController.text.trim().length < 3 || profileNameTextEditingController.text.isEmpty ? _profileNameVaild = false : _profileNameVaild = true;
-      bioTextEditingController.text.trim().length > 110 ? _bioVaild = false : _bioVaild = true;
+      profileNameTextEditingController.text.trim().length < 3 ||
+              profileNameTextEditingController.text.isEmpty
+          ? _profileNameVaild = false
+          : _profileNameVaild = true;
+      bioTextEditingController.text.trim().length > 110
+          ? _bioVaild = false
+          : _bioVaild = true;
     });
 
-    if(_profileNameVaild && _bioVaild){
+    if (_profileNameVaild && _bioVaild) {
       usersReference.document(widget.currentOnlineUserId).updateData({
         "profileName": profileNameTextEditingController.text,
         "bio": bioTextEditingController.text,
       });
-      SnackBar successSnackBar = SnackBar(content: Text("Profile has been updated successfully."));
+      SnackBar successSnackBar =
+          SnackBar(content: Text("Profile has been updated successfully."));
       _scaffoldGlobalKey.currentState.showSnackBar(successSnackBar);
     }
   }
@@ -106,28 +113,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       child: RaisedButton(
                         color: Colors.blue,
                         onPressed: updateUserData,
-                        child: Text("Update", style: TextStyle(color: Colors.white, fontSize: 16.0),),
+                        child: Text(
+                          "Update",
+                          style: TextStyle(color: Colors.white, fontSize: 16.0),
+                        ),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(
-                          top: 40.0, left: 50.0, right: 50.0),
-                      child: RaisedButton(
-                        color: Colors.red,
-                        onPressed: logOutUser,
-                        child: Text("  Sign Out  ", style: TextStyle(color: Colors.white, fontSize: 20.0),),
-                      ),
-                    )
                   ],
                 ))
               ],
             ),
     );
-  }
-
-  logOutUser() async {
-    await gSignIn.signOut();
-    Navigator.push(context, MaterialPageRoute(builder: (context) => HomePage()));
   }
 
   Column createProfileNameTextFormField() {

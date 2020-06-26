@@ -145,61 +145,68 @@ class _UploadPageState extends State<UploadPage>
   }
 
   displayUploadScreen() {
-    return Center(
-      child: Container(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Icon(
-                  Icons.add_photo_alternate,
-                  size: 100.0,
-                  color: Colors.red,
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 20.0),
-                  child: RaisedButton(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(9.0),
-                    ),
-                    child: Text(
-                      "Upload Image",
-                      style: TextStyle(fontSize: 15.0),
-                    ),
-                    onPressed: () => takeImage(context),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        centerTitle: true,
+        title: Text("Create Post"),
+      ),
+      body: Center(
+        child: Container(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(
+                    Icons.add_photo_alternate,
+                    size: 100.0,
+                    color: Colors.red,
                   ),
-                ),
-              ],
-            ),
-            SizedBox(width: 15),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Icon(
-                  Icons.video_call,
-                  size: 100.0,
-                  color: Colors.red,
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(top: 20.0),
-                  child: RaisedButton(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(9.0),
-                    ),
-                    child: Text(
-                      "Upload Video",
-                      style: TextStyle(
-                        fontSize: 15.0,
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20.0),
+                    child: RaisedButton(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(9.0),
                       ),
+                      child: Text(
+                        "Upload Image",
+                        style: TextStyle(fontSize: 15.0),
+                      ),
+                      onPressed: () => takeImage(context),
                     ),
-                    onPressed: () => takeVideo(context),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+              // SizedBox(width: 15),
+              // Column(
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //   children: <Widget>[
+              //     Icon(
+              //       Icons.video_call,
+              //       size: 100.0,
+              //       color: Colors.red,
+              //     ),
+              //     Padding(
+              //       padding: const EdgeInsets.only(top: 20.0),
+              //       child: RaisedButton(
+              //         shape: RoundedRectangleBorder(
+              //           borderRadius: BorderRadius.circular(9.0),
+              //         ),
+              //         child: Text(
+              //           "Upload Video",
+              //           style: TextStyle(
+              //             fontSize: 15.0,
+              //           ),
+              //         ),
+              //         onPressed: () => takeVideo(context),
+              //       ),
+              //     ),
+              //   ],
+              // ),
+            ],
+          ),
         ),
       ),
     );
@@ -268,7 +275,7 @@ class _UploadPageState extends State<UploadPage>
         .setData({
       "postId": postId,
       "ownerId": widget.gCurrentUser.id,
-      "timestamp": timestamp,
+      "timestamp": DateTime.now(),
       "likes": {},
       "username": widget.gCurrentUser.username,
       "discription": discription,

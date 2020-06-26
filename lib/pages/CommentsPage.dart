@@ -66,12 +66,13 @@ class CommentsPageState extends State<CommentsPage> {
     if (isNotPostOwner) {
       activityFeedReference.document(postOwnerId).collection("feedItems").add({
         "type": "comment",
-        "commentDate": timestamp,
+        "commentData": commentTextEditingController.text,
         "postId": postId,
         "userId": currentUser.id,
         "username": currentUser.username,
         "userProfileImg": currentUser.url,
         "url": postImageUrl,
+        "timestamp": DateTime.now(),
       });
     }
     commentTextEditingController.clear();
@@ -143,22 +144,7 @@ class Comment extends StatelessWidget {
         child: Column(
           children: <Widget>[
             ListTile(
-              title: Row(
-                children: <Widget>[
-                  Text(
-                    username,
-                    style:
-                        TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(width: 5.0),
-                  Expanded(
-                    child: Text(
-                      comment,
-                      style: TextStyle(fontSize: 16.0),
-                    ),
-                  ),
-                ],
-              ),
+              title: Text(username + ": " + comment),
               leading: CircleAvatar(
                 backgroundImage: CachedNetworkImageProvider(url),
               ),

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:social_app/models/user.dart';
 import 'package:social_app/pages/HomePage.dart';
+import 'package:social_app/pages/ProfilePage.dart';
 import 'package:social_app/widgets/ProgressWidget.dart';
 
 class SearchPage extends StatefulWidget {
@@ -30,16 +31,16 @@ class _SearchPageState extends State<SearchPage> with AutomaticKeepAliveClientMi
   AppBar searchPageHeader() {
     return AppBar(
       title: TextFormField(
-        style: TextStyle(fontSize: 18.0, color: Colors.black),
+        style: TextStyle(fontSize: 18.0, color: Colors.white),
         controller: searchTextEditingController,
         decoration: InputDecoration(
           hintText: "Search here....",
-          hintStyle: TextStyle(color: Colors.grey),
+          hintStyle: TextStyle(color: Colors.white),
           enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.grey),
+            borderSide: BorderSide(color: Colors.white),
           ),
           focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.black),
+            borderSide: BorderSide(color: Colors.white),
           ),
           filled: true,
           prefix: Icon(
@@ -64,14 +65,14 @@ class _SearchPageState extends State<SearchPage> with AutomaticKeepAliveClientMi
           children: <Widget>[
             Icon(
               Icons.group,
-              size: 200.0,
+              size: 100.0,
             ),
             Text(
               "Search User",
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontWeight: FontWeight.w500,
-                fontSize: 65.0,
+                fontSize: 35.0,
               ),
             ),
           ],
@@ -118,6 +119,10 @@ class UserResult extends StatelessWidget {
 
   UserResult(this.eachUser);
 
+  displayUserProfile(BuildContext context, {String userProfileId}){
+    Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userProfileId: userProfileId)));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -126,7 +131,7 @@ class UserResult extends StatelessWidget {
         child: Column(
           children: <Widget>[
             GestureDetector(
-              onTap: () {},
+              onTap: ()=> displayUserProfile(context, userProfileId: eachUser.id,),
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundColor: Colors.white,
